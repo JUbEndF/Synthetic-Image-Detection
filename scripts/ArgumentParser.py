@@ -9,7 +9,7 @@ class ArgumentParser:
         # Добавление аргументов
         self.parser.add_argument('--device', type=str, default='cuda', help='Device for training: cpu or cuda')
         self.parser.add_argument('--batch_size', type=int, default=16, help='Batch size for training')
-        self.parser.add_argument('--epochs', type=int, default=20, help='Number of training epochs')
+        self.parser.add_argument('--epochs', type=int, default=50, help='Number of training epochs')
         self.parser.add_argument('--train_data_path', type=str, default='./data/train', help='Path to training data')
         self.parser.add_argument('--val_data_path', type=str, default='./data/val', help='Path to validation data')
         self.parser.add_argument('--test_data_path', type=str, default='./data/test', help='Path to test data')

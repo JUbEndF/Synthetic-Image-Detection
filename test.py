@@ -1,7 +1,6 @@
 import cv2
 import numpy as np
 import torch
-
 from DenoisingModel import DenoisingNetwork
 
 # Загрузка изображения

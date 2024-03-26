@@ -63,7 +63,7 @@ class ResidualRefinementBlock(nn.Module):
         return out
     
 class DenoisingNetwork(nn.Module):
-    def __init__(self, in_channels=3, out_channels=3, num_rrg_blocks=3):
+    def __init__(self, in_channels=3, out_channels=3, num_rrg_blocks=4):
         super(DenoisingNetwork, self).__init__()
         self.conv_input = nn.Conv2d(in_channels, 64, kernel_size=3, padding=1)
         self.rrg_blocks = nn.ModuleList([ResidualRefinementBlock(64, 64) for _ in range(num_rrg_blocks)])

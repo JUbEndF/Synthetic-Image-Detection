@@ -1,3 +1,4 @@
+import sys
 import torch
 import torch.nn as nn
 import torch.optim as optim
@@ -9,7 +10,7 @@ import cv2
 from tqdm import tqdm
 
 from scripts.ArgumentParser import ArgumentParser
-from DenoisingModel import DenoisingNetwork
+from networks.DenoisingModel import DenoisingNetwork
 
 arg_parser = ArgumentParser()
 args = arg_parser.parse_args()
@@ -36,12 +37,16 @@ def add_noise(image):
     return noisy_image
 
 
-model = DenoisingNetwork(3, 3, 2).to(args.device)
+model = DenoisingNetwork(3, 3, 4).to(args.device)
 
 # Определите функцию потерь и оптимизатор
 criterion = nn.MSELoss().to(args.device)
 #optimizer = optim.SGD(model.parameters(), lr=args.lr)
 optimizer = optim.Adam(model.parameters(), lr=args.lr)
+
+best_val = sys.float_info.max()
+bestmodel = model
+bestepoch = 0
 
 model.train()  # Установка модели в режим обучения
 for epoch in range(args.epochs):
@@ -67,10 +72,15 @@ for epoch in range(args.epochs):
 
     # Вычисляем средние потери за эпоху
     epoch_loss = running_loss / len(dataloader.dataset)
-    print(f'Epoch [{epoch + 1}/{args.epochs}], Loss: {epoch_loss:.4f}')
+    print(f'Epoch [{epoch + 1}/{args.epochs}], Loss: {epoch_loss:.10f}')
+    if epoch_loss < best_val:
+        bestmodel = model
+        bestepoch = epoch
+
+print(f'Epoch [{bestepoch + 1}/{args.epochs}], Loss: {best_val:.10f}')
 
 import matplotlib.pyplot as plt
-
+bestmodel.save_model("3_blocks_bestmodel", './saveModel')
 model.save_model("3_blocks", './saveModel')
 
 # Загрузка модели
