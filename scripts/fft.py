@@ -24,9 +24,9 @@ def compute_amplitude_and_average(complex_array: np.ndarray, axis: int):
 
     # Вычисляем амплитуду для каждого комплексного числа
     amplitude = np.abs(fft_array)
-
+    return amplitude
     # Выполняем усреднение по указанной оси
-    averaged_amplitude = np.mean(amplitude, axis=axis)
+    #averaged_amplitude = np.mean(amplitude, axis=axis)
 
     return averaged_amplitude
 
@@ -60,6 +60,7 @@ def dftImage(image_path, device):
 
     noise = image - denoise
 
+    return noise
     b, g, r = cv2.split(noise)
 
     # Применение преобразования Фурье к каждому каналу

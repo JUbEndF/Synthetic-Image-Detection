@@ -29,14 +29,17 @@ __pycache__/
 # macOS metadata
 .DS_Store
 
-*.pt
-*.pth
-*.jpg
-*.jpeg
-*.png
-*.gif
-*.bmp
-*.svg
+# Игнорирование файлов .pt и .pth во всех вложенных папках
+**/*.pt
+**/*.pth
+
+# Игнорирование всех изображений во всех вложенных папках
+**/*.jpg
+**/*.jpeg
+**/*.png
+**/*.gif
+**/*.bmp
+**/*.svg
 
 # Windows metadata
 Thumbs.db
