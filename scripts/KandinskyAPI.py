@@ -49,9 +49,7 @@ class Text2ImageAPI:
 
 
 if __name__ == '__main__':
-    api = Text2ImageAPI('https://api-key.fusionbrain.ai/', 
-                        'F7876D948A522A4606768F29453649B5', 
-                        'BF71464A00EE0C9F58A6C3AADF51DFBF')
+    api = Text2ImageAPI()
     model_id = api.get_model()
     uuid = api.generate("Sun in sky", model_id)
     images = api.check_generation(uuid)
