@@ -55,6 +55,7 @@ class Text2ImageAPI:
 
 
 if __name__ == '__main__':
+<<<<<<< HEAD
     parser = argparse.ArgumentParser(description='Loading images from the API')
     parser.add_argument('--prompt', type=str, default="people_photos", help='Prompt for save generation')
     parser.add_argument('--countImage', type=int, default=500, help='Number of generations')
@@ -103,6 +104,9 @@ if __name__ == '__main__':
     api = Text2ImageAPI('https://api-key.fusionbrain.ai/', 
                         'F7876D948A522A4606768F29453649B5', 
                         'BF71464A00EE0C9F58A6C3AADF51DFBF')
+=======
+    api = Text2ImageAPI()
+>>>>>>> 9b3c5ae608e57b97cd155e8cfcf25a063f5e7068
     model_id = api.get_model()
     for i in tqdm(range(args.countImage)):
         uuid = api.generate(prompt[i%len(prompt)], model_id)
