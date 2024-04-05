@@ -66,3 +66,35 @@ class AIDetectionCNN(nn.Module):
         x = self.dropout(x)
         x = self.fc2(x)
         return x
+    
+class AIDetectionCNNGP(nn.Module):
+    def __init__(self, input_channels, output_size, dropout_rate=0.2):
+        super(AIDetectionCNN, self).__init__()
+        self.conv1 = nn.Conv2d(input_channels, 16, kernel_size=3, stride=1, padding=1)
+        self.conv2 = nn.Conv2d(16, 32, kernel_size=3, stride=1, padding=1)
+        self.conv3 = nn.Conv2d(32, 64, kernel_size=3, stride=1, padding=1)
+        
+        # Убираем указание фиксированного размера для полносвязного слоя
+        self.fc1 = nn.Linear(64 * 64 * 64, 128)
+        
+        self.fc2 = nn.Linear(128, output_size)
+        self.dropout = nn.Dropout(dropout_rate)
+        
+        # Убираем адаптивный пулинг
+        # self.adaptive_pool = nn.AdaptiveAvgPool2d((64, 64))
+
+    def forward(self, x):
+        x = F.relu(self.conv1(x))
+        x = F.max_pool2d(x, kernel_size=2, stride=2)
+        x = F.relu(self.conv2(x))
+        x = F.max_pool2d(x, kernel_size=2, stride=2)
+        x = F.relu(self.conv3(x))
+        
+        # Используем глобальное пулинг для агрегации признаков
+        x = F.avg_pool2d(x, kernel_size=x.size()[2:])
+
+        x = x.view(-1, 64 * 64 * 64)  # Разглаживаем данные перед подачей в полносвязные слои
+        x = F.relu(self.fc1(x))
+        x = self.dropout(x)
+        x = self.fc2(x)
+        return x
