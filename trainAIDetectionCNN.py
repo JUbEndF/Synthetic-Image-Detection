@@ -8,7 +8,7 @@ from torch.utils.data import DataLoader
 from sklearn.metrics import auc, confusion_matrix, roc_auc_score, roc_curve
 from tqdm import tqdm
 from scripts.ArgumentParser import ArgumentParser
-from networks.AIDetection import AIDetectionCNN
+from networks.AIDetection import AIDetectionCNN, AIDetectionCNNsave
 from torchvision.datasets import ImageFolder
 
 arg_parser = ArgumentParser()
@@ -31,19 +31,19 @@ def culc_confusion_matrix(train_labels, binary_predictions):
           f"Accuracy (Fake as Real): {100 * fake_as_real:.2f}%")
     return cm
 
-train_file = 'train_dataset_CNN_512.pt'
-test_file = 'test_dataset_CNN_512.pt'
+train_file = './data/humanDataset/train_dataset_CNN_102.pt'
+test_file = './data/humanDataset/test_dataset_CNN_102.pt'
 
 if os.path.exists(train_file):
     train_dataset = torch.load(train_file)
 else:
     train_dataset = ImageFolder(root=args.train_data_path, transform=transforms.ToTensor())
-    torch.save(train_dataset, train_file)
+    #torch.save(train_dataset, train_file)
 if os.path.exists(test_file):
     test_dataset = torch.load(test_file)
 else:
-    test_dataset = ImageFolder(root=args.test_data_path, transform=transforms.ToTensor())
-    torch.save(test_dataset, test_file)
+    test_dataset = ImageFolder(root=args.val_data_path, transform=transforms.ToTensor())
+    #torch.save(test_dataset, test_file)
 
 # Предполагаем, что у вас есть загруженные данные и созданы DataLoader
 train_loader = DataLoader(train_dataset, batch_size=args.batch_size, shuffle=True)
@@ -51,7 +51,7 @@ test_loader = DataLoader(test_dataset, batch_size=args.batch_size, shuffle=False
 
 # Инициализация модели
 
-model = AIDetectionCNN(input_channels=3, output_size=2).to(args.device)  # Предполагаем, что два класса (например, настоящие и фальшивые изображения)
+model = AIDetectionCNNsave(input_channels=3, output_size=2).to(args.device)  # Предполагаем, что два класса (например, настоящие и фальшивые изображения)
 
 AUCROC_train = []
 AUCROC_test = []
@@ -59,9 +59,10 @@ AUCROC_test = []
 #criterion = nn.CrossEntropyLoss().to(args.device)
 criterion = nn.BCEWithLogitsLoss().to(args.device)
 optimizer = optim.Adam(model.parameters(), lr=args.lr)
-model.train()
+
 # Обучение модели
 for epoch in range(args.epochs):
+    model.train()
     running_loss = 0.0
     train_labels = []
     predictions_probs = []
@@ -118,21 +119,30 @@ for epoch in range(args.epochs):
     auc = roc_auc_score(train_labels, predictions_probs)
     AUCROC_test.append([epoch, fpr, tpr, auc])
 
-"""
-plt.plot(fpr,tpr,label=" AUC= "+str(auc))
-plt.ylabel('True Positive Rate')
-plt.xlabel('False Positive Rate')
-plt.legend(loc=4)
-plt.show()
+# Построение ROC-кривых
+for data in AUCROC_train:
+    epoch, fpr, tpr, auc = data
+    plt.plot(fpr, tpr, label=f'Эпоха {epoch} (AUC = {auc:.2f})')
 
-
-# Графическое оформление
 plt.plot([0, 1], [0, 1], linestyle='--', color='grey', label='Случайный классификатор')
-plt.xlabel('False Positive Rate (FPR)')
-plt.ylabel('True Positive Rate (TPR)')
-plt.title('ROC AUC для каждой эпохи обучения')
+# Дополнительные настройки графика
+plt.xlabel('False Positive Rate')
+plt.ylabel('True Positive Rate')
+plt.title('ROC Curve Train')
 plt.legend(loc='lower right')
 plt.grid(True)
-plt.savefig("TrainROCAUC.png")
 plt.show()
-"""
+
+# Построение ROC-кривых
+for data in AUCROC_test:
+    epoch, fpr, tpr, auc = data
+    plt.plot(fpr, tpr, label=f'Эпоха {epoch} (AUC = {auc:.2f})')
+
+plt.plot([0, 1], [0, 1], linestyle='--', color='grey', label='Случайный классификатор')
+# Дополнительные настройки графика
+plt.xlabel('False Positive Rate')
+plt.ylabel('True Positive Rate')
+plt.title('ROC Curve Test')
+plt.legend(loc='lower right')
+plt.grid(True)
+plt.show()
