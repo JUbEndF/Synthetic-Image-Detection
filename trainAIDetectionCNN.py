@@ -31,8 +31,8 @@ def culc_confusion_matrix(train_labels, binary_predictions):
           f"Accuracy (Fake as Real): {100 * fake_as_real:.2f}%")
     return cm
 
-train_file = './data/humanDataset/train_dataset_CNN_102.pt'
-test_file = './data/humanDataset/test_dataset_CNN_102.pt'
+train_file = './data/MyDataset/train_dataset_CNN_1024.pt'
+test_file = './data/MyDataset/test_dataset_CNN_1024.pt'
 
 if os.path.exists(train_file):
     train_dataset = torch.load(train_file)
