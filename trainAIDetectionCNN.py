@@ -131,7 +131,7 @@ plt.ylabel('True Positive Rate')
 plt.title('ROC Curve Train')
 plt.legend(loc='lower right')
 plt.grid(True)
-plt.show()
+plt.show()   
 
 # Построение ROC-кривых
 for data in AUCROC_test:

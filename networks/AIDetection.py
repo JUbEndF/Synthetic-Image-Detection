@@ -72,7 +72,7 @@ class AIDetectionCNN(nn.Module):
         x = self.dropout(x)
         x = self.fc2(x)
         return x
-
+#model #1
 class AIDetectionCNNsave(nn.Module):
     def __init__(self, input_channels, output_size, dropout_rate=0.2):
         super(AIDetectionCNNsave, self).__init__()
