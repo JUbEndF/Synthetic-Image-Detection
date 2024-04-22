@@ -43,3 +43,6 @@ __pycache__/
 
 # Windows metadata
 Thumbs.db
+
+!/resultTrain
+!/resultTrain/*
