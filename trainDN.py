@@ -31,9 +31,69 @@ dataset = ImageFolder(root="D:/archive (2)/dataset/train", transform=transform)
 dataloader = DataLoader(dataset, batch_size=args.batch_size, shuffle=True)
 
 # Определим функцию для добавления шума к изображению
+import numpy as np
+import random
+import cv2  # для добавления шума солевого и перцового
+
 def add_noise(image):
-    noise = np.random.normal(0, 0.2, image.shape)  # Создаем случайный шум
+    """
+    Добавляет случайный шум к изображению RGB.
+
+    :param image: Изображение RGB в формате numpy array (например, (height, width, 3)).
+    :return: Изображение с добавленным шумом.
+    """
+    # Список доступных типов шумов
+    noise_types = ['gaussian', 'salt_and_pepper', 'speckle', 'poisson']
+    
+    # Случайно выбираем тип шума
+    noise_type = random.choice(noise_types)
+    
+    # Добавляем выбранный шум к изображению
+    if noise_type == 'gaussian':
+        noisy_image = add_gaussian_noise(image)
+    elif noise_type == 'salt_and_pepper':
+        noisy_image = add_salt_and_pepper_noise(image)
+    elif noise_type == 'speckle':
+        noisy_image = add_speckle_noise(image)
+    elif noise_type == 'poisson':
+        noisy_image = add_poisson_noise(image)
+    
+    return noisy_image
+
+def add_gaussian_noise(image):
+    """Добавляет гауссовский шум к изображению."""
+    noise = np.random.normal(0, 0.05, image.shape)  # Создаем случайный гауссовский шум
     noisy_image = image + noise  # Добавляем шум к изображению
+    noisy_image = np.clip(noisy_image, 0, 1)  # Ограничиваем значения в диапазоне [0, 1]
+    return noisy_image
+
+def add_salt_and_pepper_noise(image, salt_prob=0.02, pepper_prob=0.02):
+    """Добавляет шум солевого и перцового типа к изображению."""
+    noisy_image = np.copy(image)
+    num_salt = np.ceil(salt_prob * image.size)
+    num_pepper = np.ceil(pepper_prob * image.size)
+    
+    # Добавляем солевой шум
+    salt_coords = tuple([np.random.randint(0, i - 1, int(num_salt)) for i in image.shape])
+    noisy_image[salt_coords] = 1
+    
+    # Добавляем перцовый шум
+    pepper_coords = tuple([np.random.randint(0, i - 1, int(num_pepper)) for i in image.shape])
+    noisy_image[pepper_coords] = 0
+    
+    return noisy_image
+
+def add_speckle_noise(image):
+    """Добавляет шум пятен к изображению."""
+    noise = np.random.normal(0, 0.05, image.shape)  # Создаем случайный шум
+    noisy_image = image + image * noise  # Добавляем шум к изображению
+    noisy_image = np.clip(noisy_image, 0, 1)  # Ограничиваем значения в диапазоне [0, 1]
+    return noisy_image
+
+def add_poisson_noise(image):
+    """Добавляет пуассонов шум к изображению."""
+    noisy_image = np.random.poisson(image * 255) / 255  # Применяем пуассонов шум
+    noisy_image = np.clip(noisy_image, 0, 1)  # Ограничиваем значения в диапазоне [0, 1]
     return noisy_image
 
 

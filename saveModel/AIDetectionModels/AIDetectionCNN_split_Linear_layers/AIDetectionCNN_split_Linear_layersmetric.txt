@@ -1,0 +1,82 @@
+Epoch [1/2]
+Loss: 1.2561117750820898
+Accuracy (Real as Real): 68.07%, Accuracy (Real as Fake): 31.93%, Accuracy (Fake as Fake): 31.54%, Accuracy (Fake as Real): 68.46%
+Metrics:
+accuracy: 0.4981
+precision: 0.6807
+recall: 0.4986
+F1_score: 0.5756
+specificity: 0.4970
+balanced_accuracy: 0.4978
+kappa_statistic: -0.0038
+false_positive_rate: 0.5030
+false_negative_rate: 0.5014
+positive_predictive_value: 0.6807
+negative_predictive_value: 0.3154
+Metrics of accuracy of correct predictions:
+Precision: 0.6807
+Recall: 0.4986
+F1-Score: 0.5756
+
+Average accuracy: 0.5897
+Test data acc
+Accuracy (Real as Real): 79.00%, Accuracy (Real as Fake): 21.00%, Accuracy (Fake as Fake): 23.00%, Accuracy (Fake as Real): 77.00%
+Metrics:
+accuracy: 0.5100
+precision: 0.7900
+recall: 0.5064
+F1_score: 0.6172
+specificity: 0.5227
+balanced_accuracy: 0.5146
+kappa_statistic: 0.0200
+false_positive_rate: 0.4773
+false_negative_rate: 0.4936
+positive_predictive_value: 0.7900
+negative_predictive_value: 0.2300
+Metrics of accuracy of correct predictions:
+Precision: 0.7900
+Recall: 0.5064
+F1-Score: 0.6172
+
+Average accuracy: 0.6482
+Epoch [2/2]
+Loss: 1.2555664003174176
+Accuracy (Real as Real): 52.15%, Accuracy (Real as Fake): 47.85%, Accuracy (Fake as Fake): 48.24%, Accuracy (Fake as Real): 51.76%
+Metrics:
+accuracy: 0.5020
+precision: 0.5215
+recall: 0.5019
+F1_score: 0.5115
+specificity: 0.5021
+balanced_accuracy: 0.5020
+kappa_statistic: 0.0039
+false_positive_rate: 0.4979
+false_negative_rate: 0.4981
+positive_predictive_value: 0.5215
+negative_predictive_value: 0.4824
+Metrics of accuracy of correct predictions:
+Precision: 0.5215
+Recall: 0.5019
+F1-Score: 0.5115
+
+Average accuracy: 0.5117
+Test data acc
+Accuracy (Real as Real): 19.00%, Accuracy (Real as Fake): 81.00%, Accuracy (Fake as Fake): 79.00%, Accuracy (Fake as Real): 21.00%
+Metrics:
+accuracy: 0.4900
+precision: 0.1900
+recall: 0.4750
+F1_score: 0.2714
+specificity: 0.4938
+balanced_accuracy: 0.4844
+kappa_statistic: -0.0200
+false_positive_rate: 0.5062
+false_negative_rate: 0.5250
+positive_predictive_value: 0.1900
+negative_predictive_value: 0.7900
+Metrics of accuracy of correct predictions:
+Precision: 0.1900
+Recall: 0.4750
+F1-Score: 0.2714
+
+Average accuracy: 0.3325

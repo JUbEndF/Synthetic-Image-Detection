@@ -8,8 +8,10 @@ from torch.utils.data import DataLoader
 from sklearn.metrics import auc, confusion_matrix, roc_auc_score, roc_curve
 from tqdm import tqdm
 from scripts.ArgumentParser import ArgumentParser
-from networks.AIDetection import AIDetectionCNN, AIDetectionCNNsave
+from networks.modelCNN.AIDetection import AIDetectionCNN, AIDetectionCNN_split_Linear_layers, AIDetectionCNN_split_Linear_layers_NormBatch, AIDetectionCNNBaseNormBatch
 from torchvision.datasets import ImageFolder
+from scripts import ErrorMetrics as em
+from scripts import PrintIntoFile
 
 arg_parser = ArgumentParser()
 args = arg_parser.parse_args()
@@ -31,27 +33,34 @@ def culc_confusion_matrix(train_labels, binary_predictions):
           f"Accuracy (Fake as Real): {100 * fake_as_real:.2f}%")
     return cm
 
-train_file = './data/MyDataset/train_dataset_CNN_1024.pt'
-test_file = './data/MyDataset/test_dataset_CNN_1024.pt'
 
-if os.path.exists(train_file):
-    train_dataset = torch.load(train_file)
-else:
-    train_dataset = ImageFolder(root=args.train_data_path, transform=transforms.ToTensor())
-    #torch.save(train_dataset, train_file)
-if os.path.exists(test_file):
-    test_dataset = torch.load(test_file)
-else:
-    test_dataset = ImageFolder(root=args.val_data_path, transform=transforms.ToTensor())
-    #torch.save(test_dataset, test_file)
+data_transforms = transforms.ToTensor()
+def load_data(pathDir: str):
+    # Список для хранения загрузчиков данных
+    data_loaders = list()
 
-# Предполагаем, что у вас есть загруженные данные и созданы DataLoader
-train_loader = DataLoader(train_dataset, batch_size=args.batch_size, shuffle=True)
-test_loader = DataLoader(test_dataset, batch_size=args.batch_size, shuffle=False)
+    # Получаем список всех элементов в директории
+    all_items = os.listdir(pathDir)[0:1]
 
+    # Создаем загрузчики данных для каждой категории и класса
+    for class_name in [item for item in all_items if os.path.isdir(os.path.join(pathDir, item))]:  # добавьте все классы
+        data_folder = os.path.join(pathDir, class_name)
+        dataset = ImageFolder(root=data_folder, transform=data_transforms)
+        data_loaders.append(dataset)
+
+    dataset = torch.utils.data.ConcatDataset(data_loaders)
+    return DataLoader(dataset, batch_size=args.batch_size, shuffle=True)
+
+
+
+train_loader = load_data(args.train_data_path)
+val_loader = load_data(args.val_data_path)
 # Инициализация модели
 
-model = AIDetectionCNNsave(input_channels=3, output_size=2).to(args.device)  # Предполагаем, что два класса (например, настоящие и фальшивые изображения)
+model = AIDetectionCNN_split_Linear_layers_NormBatch(input_channels=3, output_size=2).to(args.device)  # Предполагаем, что два класса (например, настоящие и фальшивые изображения)
+
+os.makedirs(f"./saveModel/AIDetectionModels/{type(model).__name__}/", exist_ok=True)
+file = f"./saveModel/AIDetectionModels/{type(model).__name__}/{type(model).__name__}metric.txt"
 
 AUCROC_train = []
 AUCROC_test = []
@@ -68,7 +77,8 @@ for epoch in range(args.epochs):
     predictions_probs = []
     train_predictions = []
     print(f"Epoch [{epoch+1}/{args.epochs}]")
-    for inputs, labels in tqdm(train_loader):
+    for batch in tqdm(train_loader):
+        inputs, labels = batch
         inputs, labels = inputs.to(args.device), labels.to(args.device)
 
         optimizer.zero_grad()
@@ -86,17 +96,22 @@ for epoch in range(args.epochs):
         predictions_probs.extend(outputs.detach().cpu().numpy()[:, 1])
         train_labels.extend(labels.cpu().numpy())
         train_predictions.extend(preds.detach().cpu().numpy())
-    epoch_loss = running_loss / len(train_loader.dataset)
-    #print(f"Loss: {epoch_loss / len(train_loader)}")
-    culc_confusion_matrix(train_labels, train_predictions)
-
-    fpr, tpr, _ = roc_curve(train_labels, predictions_probs)
-    auc = roc_auc_score(train_labels, predictions_probs)
-    AUCROC_train.append([epoch, fpr, tpr, auc])
-    #create ROC curve
     
+    
+    torch.save(model, f"./saveModel/AIDetectionModels/{type(model).__name__}/" + f'{type(model).__name__}_epoch_{epoch+1}.pth')
 
-    torch.save(model, "./saveModel/AIDetectionModels/" + f'modelAIDetection_epoch_{epoch+1}.pth')
+    filePrint = PrintIntoFile.set_global_output_file(file)
+
+    epoch_loss = running_loss / len(train_loader)
+
+    print(f"Epoch [{epoch+1}/{args.epochs}]")
+    print(f"Loss: {epoch_loss / len(train_loader)}")
+
+    cm = culc_confusion_matrix(train_labels, train_predictions)
+    em.print_metrics(cm)
+    em.print_metrics_and_calculate_mean_accuracy(cm)
+    PrintIntoFile.restore_output(filePrint)
+
 
     print("Test data acc")
     # Вычисление матрицы ошибок на обучающей выборке
@@ -105,7 +120,7 @@ for epoch in range(args.epochs):
     train_labels = []
     predictions_probs = []
     with torch.no_grad():
-        for inputs, labels in tqdm(test_loader):
+        for inputs, labels in tqdm(val_loader):
             inputs, labels = inputs.to(args.device), labels.to(args.device)
             outputs = model(inputs)
             outputs = torch.sigmoid(outputs)  # Преобразуем выходы в бинарные предсказания
@@ -113,36 +128,12 @@ for epoch in range(args.epochs):
             predictions_probs.extend(outputs.detach().cpu().numpy()[:, 1])
             train_labels.extend(labels.cpu().numpy())
             train_predictions.extend(preds.detach().cpu().numpy())
-    culc_confusion_matrix(train_labels, train_predictions)
 
-    fpr, tpr, _ = roc_curve(train_labels, predictions_probs)
-    auc = roc_auc_score(train_labels, predictions_probs)
-    AUCROC_test.append([epoch, fpr, tpr, auc])
+    filePrint = PrintIntoFile.set_global_output_file(file)
 
-# Построение ROC-кривых
-for data in AUCROC_train:
-    epoch, fpr, tpr, auc = data
-    plt.plot(fpr, tpr, label=f'Эпоха {epoch} (AUC = {auc:.2f})')
+    print("Test data acc")
+    cm = culc_confusion_matrix(train_labels, train_predictions)
+    em.print_metrics(cm)
+    em.print_metrics_and_calculate_mean_accuracy(cm)
 
-plt.plot([0, 1], [0, 1], linestyle='--', color='grey', label='Случайный классификатор')
-# Дополнительные настройки графика
-plt.xlabel('False Positive Rate')
-plt.ylabel('True Positive Rate')
-plt.title('ROC Curve Train')
-plt.legend(loc='lower right')
-plt.grid(True)
-plt.show()   
-
-# Построение ROC-кривых
-for data in AUCROC_test:
-    epoch, fpr, tpr, auc = data
-    plt.plot(fpr, tpr, label=f'Эпоха {epoch} (AUC = {auc:.2f})')
-
-plt.plot([0, 1], [0, 1], linestyle='--', color='grey', label='Случайный классификатор')
-# Дополнительные настройки графика
-plt.xlabel('False Positive Rate')
-plt.ylabel('True Positive Rate')
-plt.title('ROC Curve Test')
-plt.legend(loc='lower right')
-plt.grid(True)
-plt.show()
+    PrintIntoFile.restore_output(filePrint)

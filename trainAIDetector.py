@@ -11,7 +11,7 @@ from sklearn.metrics import confusion_matrix
 from tqdm import tqdm
 from scripts.DatasetCustom import CustomDataset
 from scripts.fft import dftImage
-from networks.AIDetection import AIDetectionClassifier, AIDetectionClassifierLeakyReLU
+from modelCNN.AIDetection import AIDetectionClassifier, AIDetectionClassifierLeakyReLU
 from scripts.ArgumentParser import ArgumentParser
 from torchvision.datasets import ImageFolder
 
