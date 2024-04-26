@@ -57,7 +57,7 @@ train_loader = load_data(args.train_data_path)
 val_loader = load_data(args.val_data_path)
 # Инициализация модели
 
-model = AIDetectionCNN_split_Linear_layers_NormBatch(input_channels=3, output_size=2).to(args.device)  # Предполагаем, что два класса (например, настоящие и фальшивые изображения)
+model = AIDetectionCNNBaseNormBatch(input_channels=3, output_size=2).to(args.device)  # Предполагаем, что два класса (например, настоящие и фальшивые изображения)
 
 os.makedirs(f"./saveModel/AIDetectionModels/{type(model).__name__}/", exist_ok=True)
 file = f"./saveModel/AIDetectionModels/{type(model).__name__}/{type(model).__name__}metric.txt"

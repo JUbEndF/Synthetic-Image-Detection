@@ -98,7 +98,7 @@ class AIDetectionCNNBaseNormBatch(nn.Module):
         self.global_avg_pool = nn.AdaptiveAvgPool2d((1, 1))
         
         # Полносвязные слои
-        flattened_size = 64 * 64 * 64  # Размер данных после Global Average Pooling
+        flattened_size = 64 * 1 * 1  # Размер данных после Global Average Pooling
         self.fc1 = nn.Linear(flattened_size, 128)
         self.fc2 = nn.Linear(128, output_size)
         
