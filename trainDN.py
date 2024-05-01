@@ -1,191 +1,139 @@
-import sys
+import os
+from matplotlib import pyplot as plt
 import torch
 import torch.nn as nn
 import torch.optim as optim
-from torch.utils.data import DataLoader
 import torchvision.transforms as transforms
-from torchvision.datasets import ImageFolder
-import numpy as np
-import cv2
+from torch.utils.data import DataLoader
+from sklearn.metrics import auc, confusion_matrix, roc_auc_score, roc_curve
 from tqdm import tqdm
-
 from scripts.ArgumentParser import ArgumentParser
-from networks.DenoisingModel import DenoisingNetwork
+from networks.ClassifierBasedNoiseSignal.ClassifierNoiseExtraction import NoiseExtractionClassifier
+from torchvision.datasets import ImageFolder
+from scripts import ErrorMetrics as em
+from scripts import PrintIntoFile
 
 arg_parser = ArgumentParser()
 args = arg_parser.parse_args()
 
-# Предположим, что у вас есть некоторая папка с изображениями
-# Используем torchvision для загрузки изображений и трансформации
+def culc_confusion_matrix(train_labels, binary_predictions):
+    cm = confusion_matrix(train_labels, binary_predictions)
+    #print("Confusion Matrix  (Test Set):")
+    #print(cm)
 
-# Определите трансформации для загрузки изображений и их преобразования
-transform = transforms.Compose([
-    transforms.ToTensor()  # Преобразуем изображения в тензоры PyTorch
-])
+    # Вычисление точности каждой категории на тестовой выборке
+    real_as_real = cm[0, 0] / (cm[0, 0] + cm[0, 1])
+    real_as_fake = cm[0, 1] / (cm[0, 0] + cm[0, 1])
+    fake_as_fake = cm[1, 1] / (cm[1, 0] + cm[1, 1])
+    fake_as_real = cm[1, 0] / (cm[1, 0] + cm[1, 1])
 
-# Загружаем данные из папки с изображениями с применением трансформаций
-#dataset = ImageFolder(root=args.val_data_path, transform=transform)
-dataset = ImageFolder(root="D:/archive (2)/dataset/train", transform=transform)
-
-# Создаем DataLoader для загрузки данных
-dataloader = DataLoader(dataset, batch_size=args.batch_size, shuffle=True)
-
-# Определим функцию для добавления шума к изображению
-import numpy as np
-import random
-import cv2  # для добавления шума солевого и перцового
-
-def add_noise(image):
-    """
-    Добавляет случайный шум к изображению RGB.
-
-    :param image: Изображение RGB в формате numpy array (например, (height, width, 3)).
-    :return: Изображение с добавленным шумом.
-    """
-    # Список доступных типов шумов
-    noise_types = ['gaussian', 'salt_and_pepper', 'speckle', 'poisson']
-    
-    # Случайно выбираем тип шума
-    noise_type = random.choice(noise_types)
-    
-    # Добавляем выбранный шум к изображению
-    if noise_type == 'gaussian':
-        noisy_image = add_gaussian_noise(image)
-    elif noise_type == 'salt_and_pepper':
-        noisy_image = add_salt_and_pepper_noise(image)
-    elif noise_type == 'speckle':
-        noisy_image = add_speckle_noise(image)
-    elif noise_type == 'poisson':
-        noisy_image = add_poisson_noise(image)
-    
-    return noisy_image
-
-def add_gaussian_noise(image):
-    """Добавляет гауссовский шум к изображению."""
-    noise = np.random.normal(0, 0.05, image.shape)  # Создаем случайный гауссовский шум
-    noisy_image = image + noise  # Добавляем шум к изображению
-    noisy_image = np.clip(noisy_image, 0, 1)  # Ограничиваем значения в диапазоне [0, 1]
-    return noisy_image
-
-def add_salt_and_pepper_noise(image, salt_prob=0.02, pepper_prob=0.02):
-    """Добавляет шум солевого и перцового типа к изображению."""
-    noisy_image = np.copy(image)
-    num_salt = np.ceil(salt_prob * image.size)
-    num_pepper = np.ceil(pepper_prob * image.size)
-    
-    # Добавляем солевой шум
-    salt_coords = tuple([np.random.randint(0, i - 1, int(num_salt)) for i in image.shape])
-    noisy_image[salt_coords] = 1
-    
-    # Добавляем перцовый шум
-    pepper_coords = tuple([np.random.randint(0, i - 1, int(num_pepper)) for i in image.shape])
-    noisy_image[pepper_coords] = 0
-    
-    return noisy_image
-
-def add_speckle_noise(image):
-    """Добавляет шум пятен к изображению."""
-    noise = np.random.normal(0, 0.05, image.shape)  # Создаем случайный шум
-    noisy_image = image + image * noise  # Добавляем шум к изображению
-    noisy_image = np.clip(noisy_image, 0, 1)  # Ограничиваем значения в диапазоне [0, 1]
-    return noisy_image
-
-def add_poisson_noise(image):
-    """Добавляет пуассонов шум к изображению."""
-    noisy_image = np.random.poisson(image * 255) / 255  # Применяем пуассонов шум
-    noisy_image = np.clip(noisy_image, 0, 1)  # Ограничиваем значения в диапазоне [0, 1]
-    return noisy_image
+    print(f"Accuracy (Real as Real): {100 * real_as_real:.2f}%, "
+          f"Accuracy (Real as Fake): {100 * real_as_fake:.2f}%, "
+          f"Accuracy (Fake as Fake): {100 * fake_as_fake:.2f}%, "
+          f"Accuracy (Fake as Real): {100 * fake_as_real:.2f}%")
+    return cm
 
 
-model = DenoisingNetwork(3, 3, 4).to(args.device)
+data_transforms = transforms.ToTensor()
+def load_data(pathDir: str):
+    # Список для хранения загрузчиков данных
+    data_loaders = list()
 
-# Определите функцию потерь и оптимизатор
-criterion = nn.MSELoss().to(args.device)
-#optimizer = optim.SGD(model.parameters(), lr=args.lr)
+    # Получаем список всех элементов в директории
+    all_items = os.listdir(pathDir)[0:1]
+
+    # Создаем загрузчики данных для каждой категории и класса
+    for class_name in [item for item in all_items if os.path.isdir(os.path.join(pathDir, item))]:  # добавьте все классы
+        data_folder = os.path.join(pathDir, class_name)
+        dataset = ImageFolder(root=data_folder, transform=data_transforms)
+        data_loaders.append(dataset)
+
+    dataset = torch.utils.data.ConcatDataset(data_loaders)
+    return DataLoader(dataset, batch_size=args.batch_size, shuffle=True)
+
+
+
+train_loader = load_data(args.train_data_path)
+val_loader = load_data(args.val_data_path)
+# Инициализация модели
+
+model = NoiseExtractionClassifier(in_channels=3, num_classes=2).to(args.device)  # Предполагаем, что два класса (например, настоящие и фальшивые изображения)
+
+os.makedirs(f"./saveModel/AIDetectionModels/{type(model).__name__}/", exist_ok=True)
+file = f"./saveModel/AIDetectionModels/{type(model).__name__}/{type(model).__name__}metric.txt"
+
+AUCROC_train = []
+AUCROC_test = []
+
+#criterion = nn.CrossEntropyLoss().to(args.device)
+criterion = nn.BCEWithLogitsLoss().to(args.device)
 optimizer = optim.Adam(model.parameters(), lr=args.lr)
 
-best_val = sys.float_info.max()
-bestmodel = model
-bestepoch = 0
-
-model.train()  # Установка модели в режим обучения
+# Обучение модели
 for epoch in range(args.epochs):
+    model.train()
     running_loss = 0.0
-    print(f"Epoch {epoch +1}")
-    for images, labels in tqdm(dataloader):
-        # Обнуление градиентов
+    train_labels = []
+    predictions_probs = []
+    train_predictions = []
+    print(f"Epoch [{epoch+1}/{args.epochs}]")
+    for batch in tqdm(train_loader):
+        inputs, labels = batch
+        inputs, labels = inputs.to(args.device), labels.to(args.device)
+
         optimizer.zero_grad()
-
-        # Получаем предсказания модели для шумных изображений
-        noisy_images = torch.stack([torch.tensor(add_noise(image.numpy())) for image in images]).float()
-        noisy_images = noisy_images.to(args.device)
-        outputs = model(noisy_images)
-
-        # Вычисляем потери
-        loss = criterion(outputs, images.to(args.device))  # Сравниваем предсказания с оригинальными изображениями
-
-        # Обратное распространение ошибки и обновление весов
+        outputs = model(inputs)
+        one_hot_labels = nn.functional.one_hot(labels, 2)
+        loss = criterion(outputs, one_hot_labels.float())
         loss.backward()
         optimizer.step()
+        running_loss += loss.item() * inputs.size(0)
 
-        running_loss += loss.item() * images.size(0)
+        outputs = torch.sigmoid(outputs)  # Преобразуем выходы в бинарные предсказания
 
-    # Вычисляем средние потери за эпоху
-    epoch_loss = running_loss / len(dataloader.dataset)
-    print(f'Epoch [{epoch + 1}/{args.epochs}], Loss: {epoch_loss:.10f}')
-    if epoch_loss < best_val:
-        bestmodel = model
-        bestepoch = epoch
-
-print(f'Epoch [{bestepoch + 1}/{args.epochs}], Loss: {best_val:.10f}')
-
-import matplotlib.pyplot as plt
-bestmodel.save_model("3_blocks_bestmodel", './saveModel')
-model.save_model("3_blocks", './saveModel')
-
-# Загрузка модели
-#loaded_model = DenoisingModel.load_model('Denoising_model_epoch_10.pth')
-
-# Установим модель в режим оценки
-model.eval()
-
-# Выберем несколько изображений из датасета для демонстрации
-num_samples = 5
-sample_loader = DataLoader(dataset, batch_size=num_samples, shuffle=True)
-
-# Получим пакет изображений
-images, _ = next(iter(sample_loader))
-
-# Добавим шум к выбранным изображениям
-noisy_images = torch.stack([torch.tensor(add_noise(image.numpy())) for image in images]).float()
-
-# Перенесем данные на GPU
-noisy_images = noisy_images.to(args.device)
-
-# Применим модель к шумным изображениям, чтобы получить восстановленные изображения
-restored_images = model(noisy_images)
-
-# Перенесем восстановленные изображения на CPU для отображения
-restored_images = restored_images.cpu()
-
-# Покажем оригинальные, шумные и восстановленные изображения
-for i in range(num_samples):
-    plt.figure(figsize=(10, 5))
-
-    # Оригинальное изображение
-    plt.subplot(1, 3, 1)
-    plt.title('Original')
-    plt.imshow(images[i].permute(1, 2, 0))  # Переводим тензор в изображение и меняем порядок каналов
-
-    # Шумное изображение
-    plt.subplot(1, 3, 2)
-    plt.title('Noisy')
-    plt.imshow(noisy_images[i].permute(1, 2, 0).cpu().numpy())
-
-    # Восстановленное изображение
-    plt.subplot(1, 3, 3)
-    plt.title('Restored')
-    plt.imshow(restored_images[i].detach().numpy().transpose(1, 2, 0))
-
-    plt.show()
+        _, preds = torch.max(outputs, 1)
+        
+        predictions_probs.extend(outputs.detach().cpu().numpy()[:, 1])
+        train_labels.extend(labels.cpu().numpy())
+        train_predictions.extend(preds.detach().cpu().numpy())
     
+    
+    torch.save(model, f"./saveModel/AIDetectionModels/{type(model).__name__}/" + f'{type(model).__name__}_epoch_{epoch+1}.pth')
+
+    filePrint = PrintIntoFile.set_global_output_file(file)
+
+    epoch_loss = running_loss / len(train_loader)
+
+    print(f"Epoch [{epoch+1}/{args.epochs}]")
+    print(f"Loss: {epoch_loss / len(train_loader)}")
+
+    cm = culc_confusion_matrix(train_labels, train_predictions)
+    em.print_metrics(train_labels, train_predictions)
+    em.print_metrics_and_calculate_mean_accuracy(train_labels, train_predictions)
+    PrintIntoFile.restore_output(filePrint)
+
+
+    print("Test data acc")
+    # Вычисление матрицы ошибок на обучающей выборке
+    model.eval()
+    train_predictions = []
+    train_labels = []
+    predictions_probs = []
+    with torch.no_grad():
+        for inputs, labels in tqdm(val_loader):
+            inputs, labels = inputs.to(args.device), labels.to(args.device)
+            outputs = model(inputs)
+            outputs = torch.sigmoid(outputs)  # Преобразуем выходы в бинарные предсказания
+            _, preds = torch.max(outputs, 1)
+            predictions_probs.extend(outputs.detach().cpu().numpy()[:, 1])
+            train_labels.extend(labels.cpu().numpy())
+            train_predictions.extend(preds.detach().cpu().numpy())
+
+    filePrint = PrintIntoFile.set_global_output_file(file)
+
+    print("Test data acc")
+    cm = culc_confusion_matrix(train_labels, train_predictions)
+    em.print_metrics(train_labels, train_predictions)
+    em.print_metrics_and_calculate_mean_accuracy(train_labels, train_predictions)
+
+    PrintIntoFile.restore_output(filePrint)

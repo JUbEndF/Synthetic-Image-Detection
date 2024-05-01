@@ -7,25 +7,45 @@ import torch.nn.functional as F
 class AIDetectionCNN(nn.Module):
     def __init__(self, input_channels, output_size, dropout_rate=0.2):
         super(AIDetectionCNN, self).__init__()
-        self.conv1 = nn.Conv2d(input_channels, 16, kernel_size=3, stride=1, padding=1)
-        self.conv2 = nn.Conv2d(16, 32, kernel_size=3, stride=1, padding=1)
-        self.conv3 = nn.Conv2d(32, 64, kernel_size=3, stride=1, padding=1)
-        self.fc1 = nn.Linear(64 * 64 * 64, 128)  # 64*64*64 - размер данных после третьего сверточного слоя
-        self.fc2 = nn.Linear(128, output_size)
+
+        # Увеличенные размеры каналов сверточных слоев
+        self.conv1 = nn.Conv2d(input_channels, 64, kernel_size=3, stride=1, padding=1)
+        self.conv2 = nn.Conv2d(64, 128, kernel_size=3, stride=1, padding=1)
+        self.conv3 = nn.Conv2d(128, 256, kernel_size=3, stride=1, padding=1)
+        
+        # Дополнительный адаптивный пулинг для уменьшения размеров данных
+        self.adaptive_pool = nn.AdaptiveAvgPool2d((8, 8))
+        
+        # Полносвязные слои с увеличенным количеством нейронов
+        self.fc1 = nn.Linear(256 * 8 * 8, 2048)  # Увеличено количество нейронов
+        self.fc2 = nn.Linear(2048, output_size)  # Увеличено количество нейронов в последнем слое
+        
+        # Регуляризация
         self.dropout = nn.Dropout(dropout_rate)
-        self.adaptive_pool = nn.AdaptiveAvgPool2d((64, 64))  # Адаптивный пулинг для приведения изображений к фиксированному размеру
 
     def forward(self, x):
+        # Применение слоев и функций активации
         x = F.relu(self.conv1(x))
         x = F.max_pool2d(x, kernel_size=2, stride=2)
+        
         x = F.relu(self.conv2(x))
         x = F.max_pool2d(x, kernel_size=2, stride=2)
+        
         x = F.relu(self.conv3(x))
+        
+        # Адаптивный пулинг
         x = self.adaptive_pool(x)
-        x = x.view(-1, 64 * 64 * 64)  # Разглаживаем данные перед подачей в полносвязные слои
+        
+        # Разглаживание данных перед полносвязными слоями
+        x = x.view(-1, 256 * 8 * 8)
+        
+        # Полносвязные слои с функциями активации и регуляризацией
         x = F.relu(self.fc1(x))
         x = self.dropout(x)
+        
+        # Выходной слой
         x = self.fc2(x)
+        
         return x
     
 class AIDetectionCNN_split_Linear_layers(nn.Module):

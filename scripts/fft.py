@@ -4,7 +4,7 @@ import numpy as np
 import cv2
 from torchvision import transforms
 import scipy.fftpack as fftpack
-from networks.DenoisingModel import DenoisingNetwork
+from ClassifierBasedNoiseSignal.DenoisingModel import DenoisingNetwork
 
 def compute_amplitude_and_average(complex_array: np.ndarray, axis: int):
     """

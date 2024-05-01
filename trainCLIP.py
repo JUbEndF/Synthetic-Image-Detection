@@ -8,13 +8,17 @@ from torch.utils.data import DataLoader
 from sklearn.metrics import auc, confusion_matrix, roc_auc_score, roc_curve
 from tqdm import tqdm
 from scripts.ArgumentParser import ArgumentParser
-from networks.modelCNN.AIDetectionCNNModel import AIDetectionCNN, AIDetectionCNN_split_Linear_layers, AIDetectionCNN_split_Linear_layers_NormBatch, AIDetectionCNNBaseNormBatch
+from networks.modelCLIP.AIDetectionCLIPModel import CLIPClassifier, CLIPClassifierIncreasedNumberLayers, CLIPClassifierCrushLayers, extract_clip_features
 from torchvision.datasets import ImageFolder
 from scripts import ErrorMetrics as em
 from scripts import PrintIntoFile
 
 arg_parser = ArgumentParser()
 args = arg_parser.parse_args()
+
+# Инициализация модели
+modelCLIPname = "openai/clip-vit-base-patch32" #"openai/clip-resnet-50" 
+
 
 def culc_confusion_matrix(train_labels, binary_predictions):
     cm = confusion_matrix(train_labels, binary_predictions)
@@ -44,7 +48,7 @@ def load_data(pathDir: str):
     all_items = os.listdir(pathDir)
 
     # Создаем загрузчики данных для каждой категории и класса
-    for class_name in [item for item in all_items if os.path.isdir(os.path.join(pathDir, item))]:
+    for class_name in [item for item in all_items if os.path.isdir(os.path.join(pathDir, item))]:  # добавьте все классы
         data_folder = os.path.join(pathDir, class_name)
         dataset = ImageFolder(root=data_folder, transform=data_transforms)
         data_loaders.append(dataset)
@@ -56,14 +60,14 @@ def load_data(pathDir: str):
 
 train_loader = load_data(args.train_data_path)
 val_loader = load_data(args.val_data_path)
-# Инициализация модели
 
-
-for models in [AIDetectionCNN, AIDetectionCNN_split_Linear_layers, AIDetectionCNN_split_Linear_layers_NormBatch, AIDetectionCNNBaseNormBatch]:
-    model = models(input_channels=3, output_size=2).to(args.device)  # Предполагаем, что два класса (например, настоящие и фальшивые изображения)
-
+for models in [CLIPClassifier, CLIPClassifierIncreasedNumberLayers, CLIPClassifierCrushLayers]:
+    model = models(modelCLIPname, args.device).to(args.device)
     os.makedirs(f"./saveModel/AIDetectionModels/{type(model).__name__}/", exist_ok=True)
     file = f"./saveModel/AIDetectionModels/{type(model).__name__}/{type(model).__name__}metric.txt"
+
+    AUCROC_train = []
+    AUCROC_test = []
 
     #criterion = nn.CrossEntropyLoss().to(args.device)
     criterion = nn.BCEWithLogitsLoss().to(args.device)
@@ -79,6 +83,9 @@ for models in [AIDetectionCNN, AIDetectionCNN_split_Linear_layers, AIDetectionCN
         print(f"Epoch [{epoch+1}/{args.epochs}]")
         for batch in tqdm(train_loader):
             inputs, labels = batch
+
+            inputs = extract_clip_features(inputs, model.clip_model, model.clip_processor, args.device)
+
             inputs, labels = inputs.to(args.device), labels.to(args.device)
 
             optimizer.zero_grad()
@@ -121,7 +128,11 @@ for models in [AIDetectionCNN, AIDetectionCNN_split_Linear_layers, AIDetectionCN
         predictions_probs = []
         with torch.no_grad():
             for inputs, labels in tqdm(val_loader):
+
+                inputs = extract_clip_features(inputs, model.clip_model, model.clip_processor, args.device)
+
                 inputs, labels = inputs.to(args.device), labels.to(args.device)
+                
                 outputs = model(inputs)
                 outputs = torch.sigmoid(outputs)  # Преобразуем выходы в бинарные предсказания
                 _, preds = torch.max(outputs, 1)
