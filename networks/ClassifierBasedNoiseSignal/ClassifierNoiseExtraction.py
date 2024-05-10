@@ -3,7 +3,7 @@ from torch import nn
 from networks.ClassifierBasedNoiseSignal.DenoisingModel import NoiseExtractionNetwork
 
 class NoiseExtractionClassifier(nn.Module):
-    def __init__(self, in_channels, num_classes, num_rrg_blocks=4, dropout_rate=0.2):
+    def __init__(self, in_channels, num_classes, dropout_rate=0.2):
         """
         Создает сеть, которая объединяет сеть для выделения шума из изображения и классификатор.
 
@@ -13,9 +13,6 @@ class NoiseExtractionClassifier(nn.Module):
         :param dropout_rate: Уровень дроп-аута для регуляризации классификатора.
         """
         super(NoiseExtractionClassifier, self).__init__()
-
-        # Создание сети для выделения шума из изображения
-        self.noise_extraction_network = NoiseExtractionNetwork(in_channels, num_rrg_blocks)
 
         # Классификатор
         # Используем глобальное усреднительное пулирование, чтобы привести данные к фиксированному размеру
@@ -48,11 +45,9 @@ class NoiseExtractionClassifier(nn.Module):
         :param x: Входные изображения (torch.Tensor).
         :return: Предсказания (torch.Tensor).
         """
-        # Выделение шума из входного изображения
-        noise = self.noise_extraction_network(x)
         
         # Глобальное усреднительное пулирование для приведения данных к фиксированному размеру
-        noise = self.global_pool(noise)
+        noise = self.global_pool(x)
         
         # Классификация выделенного шума
         x = self.flatten(noise)
@@ -73,5 +68,54 @@ class NoiseExtractionClassifier(nn.Module):
         x = self.dropout4(x)
 
         predictions = self.fc5(x)
+        
+        return predictions
+    
+class NoiseExtractionClassifier3LBatchNorm1d(nn.Module):
+    def __init__(self, in_channels, num_classes):
+        """
+        Создает сеть для классификации шумных изображений.
+
+        :param in_channels: Количество входных каналов в изображении (обычно 3 для RGB-изображений).
+        :param num_classes: Количество классов для классификации.
+        """
+        super(NoiseExtractionClassifier3LBatchNorm1d, self).__init__()
+
+        # Глобальное усреднительное пулирование
+        self.global_pool = nn.AdaptiveAvgPool2d((32, 32))
+        
+        # Классификатор
+        self.flatten = nn.Flatten()
+        self.fc1 = nn.Linear(in_channels * 32 * 32, 256)
+        self.norm1 = nn.BatchNorm1d(256)
+        self.leaky_relu1 = nn.LeakyReLU()
+
+        self.fc2 = nn.Linear(256, 128)
+        self.norm2 = nn.BatchNorm1d(128)
+        self.leaky_relu2 = nn.LeakyReLU()
+        
+        self.fc3 = nn.Linear(128, num_classes)
+
+    def forward(self, x):
+        """
+        Прогоняет входные изображения через сеть для выделения шума, затем через классификатор.
+
+        :param x: Входные изображения (torch.Tensor).
+        :return: Предсказания (torch.Tensor).
+        """
+        # Приведение данных к фиксированному размеру
+        noise = self.global_pool(x)
+        
+        # Классификация выделенного шума
+        x = self.flatten(noise)
+        x = self.fc1(x)
+        x = self.norm1(x)
+        x = self.leaky_relu1(x)
+        
+        x = self.fc2(x)
+        x = self.norm2(x)
+        x = self.leaky_relu2(x)
+        
+        predictions = self.fc3(x)
         
         return predictions

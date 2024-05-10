@@ -4,7 +4,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 class DualAttentionBlock(nn.Module):
-    def __init__(self, in_channels, out_channels, pool_size=(32, 32)):
+    def __init__(self, in_channels, out_channels):
         super(DualAttentionBlock, self).__init__()
         # Слой свертки для обработки входа
         self.conv1 = nn.Conv2d(in_channels, out_channels, kernel_size=3, padding=1)
@@ -66,9 +66,9 @@ class ResidualRefinementBlock(nn.Module):
 class DenoisingNetwork(nn.Module):
     def __init__(self, in_channels=3, out_channels=3, num_rrg_blocks=4):
         super(DenoisingNetwork, self).__init__()
-        self.conv_input = nn.Conv2d(in_channels, 64, kernel_size=3, padding=1)
-        self.rrg_blocks = nn.ModuleList([ResidualRefinementBlock(64, 64) for _ in range(num_rrg_blocks)])
-        self.conv_output = nn.Conv2d(64, out_channels, kernel_size=3, padding=1)
+        self.conv_input = nn.Conv2d(in_channels, 32, kernel_size=3, padding=1)
+        self.rrg_blocks = nn.ModuleList([ResidualRefinementBlock(32, 32) for _ in range(num_rrg_blocks)])
+        self.conv_output = nn.Conv2d(32, out_channels, kernel_size=3, padding=1)
 
     def forward(self, x):
         out = self.conv_input(x)
@@ -80,9 +80,9 @@ class DenoisingNetwork(nn.Module):
 class NoiseExtractionNetwork(nn.Module):
     def __init__(self, in_channels=3, num_rrg_blocks=4):
         super(NoiseExtractionNetwork, self).__init__()
-        self.conv_input = nn.Conv2d(in_channels, 64, kernel_size=3, padding=1)
-        self.rrg_blocks = nn.ModuleList([ResidualRefinementBlock(64, 64) for _ in range(num_rrg_blocks)])
-        self.conv_output = nn.Conv2d(64, in_channels, kernel_size=3, padding=1)
+        self.conv_input = nn.Conv2d(in_channels, 32, kernel_size=3, padding=1)
+        self.rrg_blocks = nn.ModuleList([ResidualRefinementBlock(32, 32) for _ in range(num_rrg_blocks)])
+        self.conv_output = nn.Conv2d(32, in_channels, kernel_size=3, padding=1)
 
     def forward(self, x):
         # Сохраняем оригинальное входное изображение
