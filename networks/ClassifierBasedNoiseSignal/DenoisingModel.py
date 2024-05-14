@@ -6,11 +6,12 @@ import torch.nn.functional as F
 class DualAttentionBlock(nn.Module):
     def __init__(self, in_channels, out_channels):
         super(DualAttentionBlock, self).__init__()
-        # Convolution layers to process the input
+        # Слой свертки для обработки входа
         self.conv1 = nn.Conv2d(in_channels, out_channels, kernel_size=3, padding=1)
         self.relu = nn.ReLU()
         self.conv2 = nn.Conv2d(out_channels, out_channels, kernel_size=3, padding=1)
-        # Global attention mechanism
+
+        # Механизм внимания
         self.global_avg_pool = nn.AdaptiveAvgPool2d(1)
         self.global_max_pool = nn.AdaptiveMaxPool2d(1)
         self.att_conv1 = nn.Conv2d(out_channels, out_channels, kernel_size=1)
@@ -19,27 +20,27 @@ class DualAttentionBlock(nn.Module):
         self.sigmoid = nn.Sigmoid()
 
     def forward(self, x):
-        # Convolutional operations
+        # Свертка и активация
         out = self.conv1(x)
         out = self.relu(out)
         out = self.conv2(out)
         
-        # Global average pooling
+        # Глобальное усреднительное пулирование
         avg_out = self.global_avg_pool(out)
         avg_out = self.att_conv1(avg_out)
         avg_out = self.att_relu(avg_out)
         avg_out = self.att_conv2(avg_out)
         
-        # Global max pooling
+        # Глобальное максимальное пулирование
         max_out = self.global_max_pool(out)
         max_out = self.att_conv1(max_out)
         max_out = self.att_relu(max_out)
         max_out = self.att_conv2(max_out)
-        
-        # Attention mechanism
+
+        # Механизм внимания
         att = self.sigmoid(avg_out * max_out)
-        
-        # Multiply attention weights with the original feature maps
+
+        # Умножение весов внимания на исходные карты признаков
         out = out * att
         
         return out
@@ -65,9 +66,9 @@ class ResidualRefinementBlock(nn.Module):
 class DenoisingNetwork(nn.Module):
     def __init__(self, in_channels=3, out_channels=3, num_rrg_blocks=4):
         super(DenoisingNetwork, self).__init__()
-        self.conv_input = nn.Conv2d(in_channels, 64, kernel_size=3, padding=1)
-        self.rrg_blocks = nn.ModuleList([ResidualRefinementBlock(64, 64) for _ in range(num_rrg_blocks)])
-        self.conv_output = nn.Conv2d(64, out_channels, kernel_size=3, padding=1)
+        self.conv_input = nn.Conv2d(in_channels, 32, kernel_size=3, padding=1)
+        self.rrg_blocks = nn.ModuleList([ResidualRefinementBlock(32, 32) for _ in range(num_rrg_blocks)])
+        self.conv_output = nn.Conv2d(32, out_channels, kernel_size=3, padding=1)
 
     def forward(self, x):
         out = self.conv_input(x)
@@ -76,16 +77,26 @@ class DenoisingNetwork(nn.Module):
         out = self.conv_output(out)
         return out
     
-    def save_model(self, epoch, dir_path):
-        # Создание директории, если её нет
-        os.makedirs(dir_path, exist_ok=True)
-        # Генерация имени файла
-        file_name = os.path.join(dir_path, f'Denoising_RRG_model_epoch_{epoch}.pth')
-        torch.save(self.state_dict(), file_name)
+class NoiseExtractionNetwork(nn.Module):
+    def __init__(self, in_channels=3, num_rrg_blocks=4):
+        super(NoiseExtractionNetwork, self).__init__()
+        self.conv_input = nn.Conv2d(in_channels, 32, kernel_size=3, padding=1)
+        self.rrg_blocks = nn.ModuleList([ResidualRefinementBlock(32, 32) for _ in range(num_rrg_blocks)])
+        self.conv_output = nn.Conv2d(32, in_channels, kernel_size=3, padding=1)
 
-    @classmethod
-    def load_model(cls, file_path):
-        model = cls()
-        model.load_state_dict(torch.load(file_path))
-        model.eval()  # Установите в режим оценки (evaluation), если это необходимо
-        return model
+    def forward(self, x):
+        # Сохраняем оригинальное входное изображение
+        original_input = x.clone()
+        
+        # Обработка входного изображения
+        out = self.conv_input(x)
+        for rrg_block in self.rrg_blocks:
+            out = rrg_block(out)
+        
+        # Получаем деноизированное изображение
+        denoised_output = self.conv_output(out)
+        
+        # Вычисляем шум путем вычитания деноизированного изображения из оригинального входного изображения
+        noise_output = original_input - denoised_output
+        
+        return noise_output
