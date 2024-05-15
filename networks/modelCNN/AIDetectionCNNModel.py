@@ -359,3 +359,77 @@ class AIDetectionCNN7BatchNorm(nn.Module):
         x = self.fc4(x)
 
         return x
+    
+class AIDetectionCNN6BatchNorm(nn.Module):
+    def __init__(self, input_channels, output_size, dropout_rate=0.2):
+        super(AIDetectionCNN6BatchNorm, self).__init__()
+
+        # Определяем сверточные слои с нарастающим количеством фильтров
+        self.conv1 = nn.Conv2d(input_channels, 64, kernel_size=3, stride=1, padding=1)
+        self.bn1 = nn.BatchNorm2d(64)
+        self.conv2 = nn.Conv2d(64, 128, kernel_size=3, stride=1, padding=1)
+        self.bn2 = nn.BatchNorm2d(128)
+        self.conv3 = nn.Conv2d(128, 256, kernel_size=3, stride=1, padding=1)
+        self.bn3 = nn.BatchNorm2d(256)
+        self.conv4 = nn.Conv2d(256, 512, kernel_size=3, stride=1, padding=1)
+        self.bn4 = nn.BatchNorm2d(512)
+        self.conv5 = nn.Conv2d(512, 256, kernel_size=3, stride=1, padding=1)
+        self.bn5 = nn.BatchNorm2d(256)
+        self.conv6 = nn.Conv2d(256, 128, kernel_size=3, stride=1, padding=1)
+        self.bn6 = nn.BatchNorm2d(128)
+
+        # Макс-пулинг после каждого сверточного слоя
+        self.pool = nn.MaxPool2d(kernel_size=2, stride=2)
+
+        # Адаптивный пулинг для приведения изображений к фиксированному размеру
+        self.adaptive_pool = nn.AdaptiveAvgPool2d((8, 8))
+
+        # Размер после адаптивного пулинга
+        flattened_size = 128 * 8 * 8
+
+        # Полносвязные слои с регуляризацией и нормализацией
+        self.fc1 = nn.Linear(flattened_size, 1024)
+        self.bn_fc1 = nn.BatchNorm1d(1024)
+        self.fc2 = nn.Linear(1024, 2048)
+        self.bn_fc2 = nn.BatchNorm1d(2048)
+        self.fc3 = nn.Linear(2048, 2048)
+        self.bn_fc3 = nn.BatchNorm1d(2048)
+        
+        # Выходной слой
+        self.fc4 = nn.Linear(2048, output_size)
+
+        # Дроп-аут для регуляризации
+        self.dropout = nn.Dropout(dropout_rate)
+
+    def forward(self, x):
+        # Прохождение через сверточные слои с Batch Normalization и Leaky ReLU
+        x = nn.LeakyReLU()(self.bn1(self.conv1(x)))
+        x = self.pool(x)
+        x = nn.LeakyReLU()(self.bn2(self.conv2(x)))
+        x = self.pool(x)
+        x = nn.LeakyReLU()(self.bn3(self.conv3(x)))
+        x = self.pool(x)
+        x = nn.LeakyReLU()(self.bn4(self.conv4(x)))
+        x = self.pool(x)
+        x = nn.LeakyReLU()(self.bn5(self.conv5(x)))
+        x = self.pool(x)
+        x = nn.LeakyReLU()(self.bn6(self.conv6(x)))
+        x = self.pool(x)
+
+        # Адаптивный пулинг для приведения размера к фиксированному значению
+        x = self.adaptive_pool(x)
+
+        # Разглаживание данных перед отправкой в полносвязные слои
+        x = x.view(-1, 128 * 8 * 8)
+
+        # Прогон через полносвязные слои с Batch Normalization, дроп-аутом и Leaky ReLU
+        x = nn.LeakyReLU()(self.bn_fc1(self.fc1(x)))
+        x = self.dropout(x)
+        x = nn.LeakyReLU()(self.bn_fc2(self.fc2(x)))
+        x = self.dropout(x)
+        x = nn.LeakyReLU()(self.bn_fc3(self.fc3(x)))
+
+        # Выходной слой
+        x = self.fc4(x)
+
+        return x

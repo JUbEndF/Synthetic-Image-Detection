@@ -72,7 +72,7 @@ if __name__ == '__main__':
     ])
     testFolder = "./data/CNN_synth_testset/"
 
-    model_path = "./saveModel/AIDetectionModels/AIDetectionCNNBaseNormBatch/AIDetectionCNNBaseNormBatch_epoch_10.pth"
+    model_path = "./saveModel/AIDetectionModels/AIDetectionCNN/AIDetectionCNN_epoch_10.pth"
     model = torch.load(model_path)
 
     print(type(model))
@@ -108,6 +108,6 @@ if __name__ == '__main__':
         print(f"Test data acc {datatype} ")
         cm = culc_confusion_matrix(train_labels, train_predictions)
         em.print_metrics(train_labels, train_predictions)
-        em.print_metrics_and_calculate_mean_accuracy(train_labels, train_predictions)
+        em.print_metrics_and_calculate_mean_accuracy(train_labels, train_predictions, predictions_probs)
 
         PrintIntoFile.restore_output(filePrint)

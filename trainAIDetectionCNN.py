@@ -14,7 +14,7 @@ from networks.modelCNN.AIDetectionCNNModel import (
     AIDetectionCNN_split_Linear_layers, 
     AIDetectionCNN_split_Linear_layers_NormBatch, 
     AIDetectionCNNBaseNormBatch,
-    AIDetectionCNN7BatchNorm,
+    AIDetectionCNN7BatchNorm,AIDetectionCNN6BatchNorm,
     )
 from torchvision.datasets import ImageFolder
 from scripts import ErrorMetrics as em
@@ -75,7 +75,7 @@ if __name__ == '__main__':
     # Инициализация модели
 
 
-    for models in [AIDetectionCNN7BatchNorm]:
+    for models in [AIDetectionCNN6BatchNorm]:
         model = models(input_channels=3, output_size=2).to(device)  # Предполагаем, что два класса (например, настоящие и фальшивые изображения)
 
         os.makedirs(f"./saveModel/AIDetectionModels/{type(model).__name__}/", exist_ok=True)
