@@ -37,17 +37,17 @@ if __name__ == '__main__':
     args = arg_parser.parse_args()
 
 
-    model_name = "google/vit-large-patch16-224"#"google/vit-base-patch16-224"
-    model_class, processor_class = model_dict[model_name]
+    model_name = "openai/clip-vit-base-patch32"#"google/vit-base-patch16-224"
 
-    transform = transforms.ToTensor()
+    model= CLIPModel.from_pretrained("openai/clip-vit-base-patch32")
+    processor = CLIPProcessor.from_pretrained("openai/clip-vit-base-patch32")
+    transform = transforms.Compose([
+        transforms.CenterCrop(size=(224, 224)),
+        transforms.ToTensor(),
+    ])
 
     # Подготовьте загрузчик данных
     dataloader = load_data(args.val_data_path)
-
-    # Загрузите модель CLIP и процессор
-    model = model_class.from_pretrained(model_name)
-    processor = processor_class.from_pretrained(model_name)
 
     # Переведите модель на нужное устройство (например, CUDA, если доступно)
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -64,16 +64,9 @@ if __name__ == '__main__':
     with torch.no_grad():
         for images, target_labels in tqdm(dataloader):
             # Переместите данные на нужное устройство
-            
-            inputs = processor(images=images, return_tensors="pt")
-            pixel_values = inputs["pixel_values"].to(device)
 
             # Получение признаков с помощью модели
-            if isinstance(model, CLIPModel):
-                images = model.get_image_features(pixel_values)
-            elif isinstance(model, ViTModel):
-                outputs = model(pixel_values)
-                images = outputs.last_hidden_state.mean(dim=1)
+            images = model.get_image_features(pixel_values=images.to(device))
 
             
             # Переведите векторы признаков в список и переместите на CPU
@@ -87,7 +80,7 @@ if __name__ == '__main__':
     labels = torch.cat(labels, dim=0)
 
     # Сохранение векторов признаков и меток классов в файл .npz
-    output_path = f"clip_features_val.npz"
+    output_path = f"clip-vit-base-patch32_features_val.npz"
     # Загрузка существующих данных из файла .npz
     if os.path.exists(output_path):
         existing_data = np.load(output_path, mmap_mode="r+")
