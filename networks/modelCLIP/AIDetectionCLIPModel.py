@@ -106,7 +106,7 @@ class Classifierclip_vit_base_patch32(nn.Module):
         x = self.classifier(features)
         return x
 
-class ClassifierResNet(nn.Module):
+class ClassifierResNet50(nn.Module):
     def __init__(self, feature_dim=512, output_dim=2):
         super(ClassifierResNet, self).__init__()
         self.input_dim = feature_dim
@@ -152,7 +152,7 @@ class ClassifierResNet(nn.Module):
         x = self.classifier(features)
         return x
 
-class ClassifierResNet101(nn.Module):
+class ClassifierResNet(nn.Module):
     def __init__(self, feature_dim=2048, output_dim=2):
         super(ClassifierResNet101, self).__init__()
         self.input_dim = feature_dim
