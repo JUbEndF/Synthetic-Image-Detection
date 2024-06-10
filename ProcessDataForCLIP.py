@@ -5,15 +5,16 @@ import torch
 import numpy as np
 from torch.utils.data import DataLoader
 from torchvision.datasets import ImageFolder
-from transformers import CLIPProcessor, CLIPModel, ViTImageProcessor, ViTModel
+from transformers import CLIPProcessor, CLIPModel, ViTImageProcessor, ViTModel, DeiTModel, DeiTFeatureExtractor
 import torchvision.transforms as transforms
-
+import torchvision.models as models
 
 model_dict = {
     "openai/clip-vit-base-patch32": (CLIPModel, CLIPProcessor),
     "openai/clip-resnet-50": (CLIPModel, CLIPProcessor),
     "google/vit-base-patch16-224": (ViTModel, ViTImageProcessor),
-    "google/vit-large-patch16-224": (ViTModel, ViTImageProcessor)
+    "google/vit-large-patch16-224": (ViTModel, ViTImageProcessor),
+    "facebook/deit-base-patch16-224": (DeiTModel, DeiTFeatureExtractor)
 }
 
 def load_data(pathDir: str):
@@ -36,25 +37,17 @@ if __name__ == '__main__':
     arg_parser = ArgumentParser()
     args = arg_parser.parse_args()
 
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    
+    model = ViTModel.from_pretrained("google/vit-base-patch16-224").to(device)
 
-    model_name = "google/vit-large-patch16-224"#"google/vit-base-patch16-224"
-    model_class, processor_class = model_dict[model_name]
-
-    transform = transforms.ToTensor()
+    transform = transforms.Compose([
+        transforms.CenterCrop(size=(224, 224)),
+        transforms.ToTensor(),
+    ])
 
     # Подготовьте загрузчик данных
-    dataloader = load_data(args.val_data_path)
-
-    # Загрузите модель CLIP и процессор
-    model = model_class.from_pretrained(model_name)
-    processor = processor_class.from_pretrained(model_name)
-
-    # Переведите модель на нужное устройство (например, CUDA, если доступно)
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    model.to(device)
-
-    # Переведите модель в режим оценки (evaluation)
-    model.eval()
+    dataloader = load_data(args.train_data_path)
 
     # Списки для хранения векторов признаков и меток классов
     features = []
@@ -64,30 +57,29 @@ if __name__ == '__main__':
     with torch.no_grad():
         for images, target_labels in tqdm(dataloader):
             # Переместите данные на нужное устройство
-            
-            inputs = processor(images=images, return_tensors="pt")
-            pixel_values = inputs["pixel_values"].to(device)
 
             # Получение признаков с помощью модели
-            if isinstance(model, CLIPModel):
-                images = model.get_image_features(pixel_values)
-            elif isinstance(model, ViTModel):
-                outputs = model(pixel_values)
-                images = outputs.last_hidden_state.mean(dim=1)
+            if model is CLIPModel:
+                images = model.get_image_features(pixel_values=images.to(device))
+            else:
+                images = model(images.to(device)) 
+                images = images.last_hidden_state 
 
             
             # Переведите векторы признаков в список и переместите на CPU
-            features.append(images.cpu())
+            features.append(images.detach().cpu())
             
             # Сохраняйте метки классов
             labels.append(target_labels)
+        del images, target_labels
+        torch.cuda.empty_cache()
 
     # Конвертируем списки в тензоры
     features = torch.cat(features, dim=0)
     labels = torch.cat(labels, dim=0)
 
     # Сохранение векторов признаков и меток классов в файл .npz
-    output_path = f"clip_features_val.npz"
+    output_path = f"vit-base-patch16-224_features_train.npz"
     # Загрузка существующих данных из файла .npz
     if os.path.exists(output_path):
         existing_data = np.load(output_path, mmap_mode="r+")

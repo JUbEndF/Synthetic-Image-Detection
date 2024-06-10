@@ -1,0 +1,14 @@
+Testset,Acc (224)
+progan,1.0
+stylegan,0.734
+biggan,0.59
+cyclegan,0.808
+stargan,0.81
+gaugan,0.793
+crn,0.876
+imle,0.941
+san,0.5
+seeingdark, 0.783
+deepfake,0.511
+stylegan2,0.684
+whichfaceisreal,0.639

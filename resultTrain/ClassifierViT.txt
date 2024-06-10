@@ -1,0 +1,195 @@
+Test data acc biggan 
+Accuracy (Real as Real): 99.35%, Accuracy (Real as Fake): 0.65%, Accuracy (Fake as Fake): 18.40%, Accuracy (Fake as Real): 81.60%
+Metrics:
+accuracy: 0.5887
+precision: 0.9659
+recall: 0.1840
+F1_score: 0.3091
+balanced_accuracy: 0.5887
+kappa_statistic: 0.1775
+Metrics of accuracy of correct predictions:
+Precision: 0.9659
+Recall: 0.1840
+F1-Score: 0.3091
+F1-Score: 0.3091
+Average Precision: 0.8390801155585903
+Test data acc crn 
+Accuracy (Real as Real): 82.18%, Accuracy (Real as Fake): 17.82%, Accuracy (Fake as Fake): 60.51%, Accuracy (Fake as Real): 39.49%
+Metrics:
+accuracy: 0.7135
+precision: 0.7726
+recall: 0.6051
+F1_score: 0.6787
+balanced_accuracy: 0.7135
+kappa_statistic: 0.4270
+Metrics of accuracy of correct predictions:
+Precision: 0.7726
+Recall: 0.6051
+F1-Score: 0.6787
+F1-Score: 0.6787
+Average Precision: 0.7823825784319671
+Test data acc cyclegan 
+Accuracy (Real as Real): 98.79%, Accuracy (Real as Fake): 1.21%, Accuracy (Fake as Fake): 68.36%, Accuracy (Fake as Real): 31.64%
+Metrics:
+accuracy: 0.8357
+precision: 0.9826
+recall: 0.6836
+F1_score: 0.8063
+balanced_accuracy: 0.8357
+kappa_statistic: 0.6715
+Metrics of accuracy of correct predictions:
+Precision: 0.9826
+Recall: 0.6836
+F1-Score: 0.8063
+F1-Score: 0.8063
+Average Precision: 0.9751071964596697
+Test data acc deepfake 
+Accuracy (Real as Real): 97.41%, Accuracy (Real as Fake): 2.59%, Accuracy (Fake as Fake): 29.76%, Accuracy (Fake as Real): 70.24%
+Metrics:
+accuracy: 0.6364
+precision: 0.9198
+recall: 0.2976
+F1_score: 0.4497
+balanced_accuracy: 0.6359
+kappa_statistic: 0.2721
+Metrics of accuracy of correct predictions:
+Precision: 0.9198
+Recall: 0.2976
+F1-Score: 0.4497
+F1-Score: 0.4497
+Average Precision: 0.8194023086000395
+Test data acc gaugan 
+Accuracy (Real as Real): 98.98%, Accuracy (Real as Fake): 1.02%, Accuracy (Fake as Fake): 48.06%, Accuracy (Fake as Real): 51.94%
+Metrics:
+accuracy: 0.7352
+precision: 0.9792
+recall: 0.4806
+F1_score: 0.6448
+balanced_accuracy: 0.7352
+kappa_statistic: 0.4704
+Metrics of accuracy of correct predictions:
+Precision: 0.9792
+Recall: 0.4806
+F1-Score: 0.6448
+F1-Score: 0.6448
+Average Precision: 0.9437573860095114
+Test data acc imle 
+Accuracy (Real as Real): 82.18%, Accuracy (Real as Fake): 17.82%, Accuracy (Fake as Fake): 90.29%, Accuracy (Fake as Real): 9.71%
+Metrics:
+accuracy: 0.8623
+precision: 0.8352
+recall: 0.9029
+F1_score: 0.8677
+balanced_accuracy: 0.8623
+kappa_statistic: 0.7247
+Metrics of accuracy of correct predictions:
+Precision: 0.8352
+Recall: 0.9029
+F1-Score: 0.8677
+F1-Score: 0.8677
+Average Precision: 0.9328567752603489
+Test data acc progan 
+Accuracy (Real as Real): 97.90%, Accuracy (Real as Fake): 2.10%, Accuracy (Fake as Fake): 98.25%, Accuracy (Fake as Real): 1.75%
+Metrics:
+accuracy: 0.9808
+precision: 0.9791
+recall: 0.9825
+F1_score: 0.9808
+balanced_accuracy: 0.9808
+kappa_statistic: 0.9615
+Metrics of accuracy of correct predictions:
+Precision: 0.9791
+Recall: 0.9825
+F1-Score: 0.9808
+F1-Score: 0.9808
+Average Precision: 0.9980605391054561
+Test data acc san 
+Accuracy (Real as Real): 99.09%, Accuracy (Real as Fake): 0.91%, Accuracy (Fake as Fake): 1.83%, Accuracy (Fake as Real): 98.17%
+Metrics:
+accuracy: 0.5046
+precision: 0.6667
+recall: 0.0183
+F1_score: 0.0356
+balanced_accuracy: 0.5046
+kappa_statistic: 0.0091
+Metrics of accuracy of correct predictions:
+Precision: 0.6667
+Recall: 0.0183
+F1-Score: 0.0356
+F1-Score: 0.0356
+Average Precision: 0.6266470791432646
+Test data acc seeingdark 
+Accuracy (Real as Real): 99.44%, Accuracy (Real as Fake): 0.56%, Accuracy (Fake as Fake): 15.00%, Accuracy (Fake as Real): 85.00%
+Metrics:
+accuracy: 0.5722
+precision: 0.9643
+recall: 0.1500
+F1_score: 0.2596
+balanced_accuracy: 0.5722
+kappa_statistic: 0.1444
+Metrics of accuracy of correct predictions:
+Precision: 0.9643
+Recall: 0.1500
+F1-Score: 0.2596
+F1-Score: 0.2596
+Average Precision: 0.7433223075430506
+Test data acc stargan 
+Accuracy (Real as Real): 100.00%, Accuracy (Real as Fake): 0.00%, Accuracy (Fake as Fake): 29.91%, Accuracy (Fake as Real): 70.09%
+Metrics:
+accuracy: 0.6496
+precision: 1.0000
+recall: 0.2991
+F1_score: 0.4605
+balanced_accuracy: 0.6496
+kappa_statistic: 0.2991
+Metrics of accuracy of correct predictions:
+Precision: 1.0000
+Recall: 0.2991
+F1-Score: 0.4605
+F1-Score: 0.4605
+Average Precision: 0.956558327565031
+Test data acc stylegan 
+Accuracy (Real as Real): 99.03%, Accuracy (Real as Fake): 0.97%, Accuracy (Fake as Fake): 39.39%, Accuracy (Fake as Real): 60.61%
+Metrics:
+accuracy: 0.6921
+precision: 0.9760
+recall: 0.3939
+F1_score: 0.5613
+balanced_accuracy: 0.6921
+kappa_statistic: 0.3842
+Metrics of accuracy of correct predictions:
+Precision: 0.9760
+Recall: 0.3939
+F1-Score: 0.5613
+F1-Score: 0.5613
+Average Precision: 0.8942288830889891
+Test data acc stylegan2 
+Accuracy (Real as Real): 98.90%, Accuracy (Real as Fake): 1.10%, Accuracy (Fake as Fake): 31.31%, Accuracy (Fake as Real): 68.69%
+Metrics:
+accuracy: 0.6510
+precision: 0.9660
+recall: 0.3131
+F1_score: 0.4729
+balanced_accuracy: 0.6510
+kappa_statistic: 0.3021
+Metrics of accuracy of correct predictions:
+Precision: 0.9660
+Recall: 0.3131
+F1-Score: 0.4729
+F1-Score: 0.4729
+Average Precision: 0.8714235416468581
+Test data acc whichfaceisreal 
+Accuracy (Real as Real): 96.40%, Accuracy (Real as Fake): 3.60%, Accuracy (Fake as Fake): 4.30%, Accuracy (Fake as Real): 95.70%
+Metrics:
+accuracy: 0.5035
+precision: 0.5443
+recall: 0.0430
+F1_score: 0.0797
+balanced_accuracy: 0.5035
+kappa_statistic: 0.0070
+Metrics of accuracy of correct predictions:
+Precision: 0.5443
+Recall: 0.0430
+F1-Score: 0.0797
+F1-Score: 0.0797
+Average Precision: 0.5293331138385061

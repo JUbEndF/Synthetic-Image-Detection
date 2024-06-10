@@ -4,7 +4,7 @@ import numpy as np
 import cv2
 from torchvision import transforms
 import scipy.fftpack as fftpack
-from ClassifierBasedNoiseSignal.DenoisingModel import DenoisingNetwork
+from networks.ClassifierBasedNoiseSignal.ClassifierNoiseExtraction import DenoisingNetwork
 
 def compute_amplitude_and_average(complex_array: np.ndarray, axis: int):
     """
@@ -24,9 +24,9 @@ def compute_amplitude_and_average(complex_array: np.ndarray, axis: int):
 
     # Вычисляем амплитуду для каждого комплексного числа
     amplitude = np.abs(fft_array)
-    return amplitude
+
     # Выполняем усреднение по указанной оси
-    #averaged_amplitude = np.mean(amplitude, axis=axis)
+    averaged_amplitude = np.mean(amplitude, axis=axis)
 
     return averaged_amplitude
 
@@ -53,20 +53,21 @@ def dftImage(image_path, device):
     image = Image.open(image_path).convert('RGB')
 
     # Загрузка модели
-    model = DenoisingNetwork.load_model('./saveModel/Denoising_RRG_model_epoch_3_blocks.pth')
+    model = DenoisingNetwork().to('cuda' if torch.cuda.is_available() else 'cpu')
 
     # Обработка изображения с помощью модели
     denoise = process_image(image, model, device)
 
     noise = image - denoise
 
-    return noise
     b, g, r = cv2.split(noise)
 
     # Применение преобразования Фурье к каждому каналу
     dft_b = compute_amplitude_and_average(b, 0)
     dft_g = compute_amplitude_and_average(g, 0)
     dft_r = compute_amplitude_and_average(r, 0)
+
+
 
     return [dft_b, dft_g, dft_r]
 

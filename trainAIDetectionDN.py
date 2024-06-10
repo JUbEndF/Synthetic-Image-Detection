@@ -11,7 +11,7 @@ from networks.ClassifierBasedNoiseSignal.ClassifierNoiseExtraction import (
     DenoisingNetwork,
     NoiseExtractionClassifier, 
     NoiseExtractionClassifier3LBatchNorm1d,
-    NoiseExtractionClassifierImproved
+    NoiseExtractionClassifierImproved, ClassifierNE, ClassifierNEsimple
 )
 from torchvision.datasets import ImageFolder
 from scripts import ErrorMetrics as em
@@ -60,7 +60,7 @@ if __name__ == '__main__':
     train_loader = load_data(args.train_data_path)
     val_loader = load_data(args.val_data_path)
     # Инициализация модели
-    for madels in [NoiseExtractionClassifier3LBatchNorm1d, NoiseExtractionClassifierImproved]:
+    for madels in [ClassifierNEsimple]:
         model = madels(in_channels=3, num_classes=2).to(args.device)  # Предполагаем, что два класса (например, настоящие и фальшивые изображения)
 
         os.makedirs(f"./saveModel/AIDetectionModels/{type(model).__name__}/", exist_ok=True)

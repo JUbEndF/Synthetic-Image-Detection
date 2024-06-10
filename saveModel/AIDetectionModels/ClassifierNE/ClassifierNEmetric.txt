@@ -1,0 +1,31 @@
+Epoch [1/10]
+Loss: 0.0036364737903151075
+Accuracy (Real as Real): 71.26%, Accuracy (Real as Fake): 28.74%, Accuracy (Fake as Fake): 73.26%, Accuracy (Fake as Real): 26.74%
+Metrics:
+accuracy: 0.7226
+precision: 0.7183
+recall: 0.7326
+F1_score: 0.7254
+balanced_accuracy: 0.7226
+kappa_statistic: 0.4452
+Metrics of accuracy of correct predictions:
+Precision: 0.7183
+Recall: 0.7326
+F1-Score: 0.7254
+F1-Score: 0.7254
+Average Precision: 0.789919780886456
+Test data acc
+Accuracy (Real as Real): 74.83%, Accuracy (Real as Fake): 25.17%, Accuracy (Fake as Fake): 77.72%, Accuracy (Fake as Real): 22.27%
+Metrics:
+accuracy: 0.7628
+precision: 0.7553
+recall: 0.7772
+F1_score: 0.7661
+balanced_accuracy: 0.7628
+kappa_statistic: 0.5255
+Metrics of accuracy of correct predictions:
+Precision: 0.7553
+Recall: 0.7772
+F1-Score: 0.7661
+F1-Score: 0.7661
+Average Precision: 0.8348228838585392

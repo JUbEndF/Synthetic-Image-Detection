@@ -4,7 +4,9 @@ from sklearn.metrics import confusion_matrix
 import torch
 from tqdm import tqdm
 from scripts.ArgumentParser import ArgumentParser
-from networks.modelCNN.AIDetectionCNNModel import AIDetectionCNN
+from networks.ClassifierBasedNoiseSignal.ClassifierNoiseExtraction import (
+    DenoisingNetwork, NoiseExtractionClassifier2
+)
 from torchvision.datasets import ImageFolder
 from torch.utils.data import DataLoader
 from scripts import ErrorMetrics as em
@@ -67,12 +69,12 @@ def load_data(pathDir: str):
 
 if __name__ == '__main__':
     data_transforms = transforms.Compose([
-        transforms.Resize(size=(256, 256)),
+        transforms.CenterCrop(size=(256, 256)),
         transforms.ToTensor()  # Преобразуем изображения в тензоры PyTorch
     ])
     testFolder = "./data/CNN_synth_testset/"
-
-    model_path = "./saveModel/AIDetectionModels/AIDetectionCNN/AIDetectionCNN_epoch_10.pth"
+    denoising_network = DenoisingNetwork().to('cuda' if torch.cuda.is_available() else 'cpu')
+    model_path = "./saveModel/ClassifierNEPReLU_epoch_10.pth"
     model = torch.load(model_path)
 
     print(type(model))
@@ -88,7 +90,7 @@ if __name__ == '__main__':
         else:
             dataloader = load_data(folder)
 
-        file = f"./saveModel/AIDetectionModels/{type(model).__name__}/testmetrix.txt"
+        file = f"./resultTrain/{type(model).__name__}testmetrix.txt"
         model.eval()
         train_predictions = []
         train_labels = []
@@ -96,6 +98,7 @@ if __name__ == '__main__':
         with torch.no_grad():
             for inputs, labels in tqdm(dataloader):
                 inputs, labels = inputs.to(args.device), labels.to(args.device)
+                inputs = inputs - denoising_network(inputs)
                 outputs = model(inputs)
                 outputs = torch.sigmoid(outputs)  # Преобразуем выходы в бинарные предсказания
                 _, preds = torch.max(outputs, 1)

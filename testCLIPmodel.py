@@ -4,12 +4,16 @@ from sklearn.metrics import confusion_matrix
 import torch
 from tqdm import tqdm
 from scripts.ArgumentParser import ArgumentParser
-from networks.modelCNN.AIDetectionCNNModel import AIDetectionCNN
 from torchvision.datasets import ImageFolder
 from torch.utils.data import DataLoader
 from scripts import ErrorMetrics as em
 from scripts import PrintIntoFile
-
+from transformers import CLIPProcessor, CLIPModel, ViTImageProcessor, ViTModel
+from networks.modelCLIP.AIDetectionCLIPModel import( 
+    Classifierclip_vit_base_patch32,
+    ClassifierViT,
+    ClassifierResNet101,
+    )
 arg_parser = ArgumentParser()
 args = arg_parser.parse_args()
 
@@ -65,49 +69,64 @@ def load_data(pathDir: str):
     dataset = torch.utils.data.ConcatDataset(data_loaders)
     return DataLoader(dataset, batch_size=args.batch_size, shuffle=True, num_workers=2)
 
+def processDataClipVitBasePatch32(images):
+    model= CLIPModel.from_pretrained("openai/clip-vit-base-patch32").to(args.device)
+    return model.get_image_features(pixel_values=images.to(args.device))
+
+model_dict = {
+    "./saveModel/ClassifierViT_epoch_6.pth": ClassifierViT,
+    "./saveModel/Classifierclip_vit_base_patch32_epoch_6.pth": Classifierclip_vit_base_patch32,
+    "./saveModel/ClassifierResNet101_epoch_6.pth": ClassifierResNet101,
+}
+
 if __name__ == '__main__':
+
     data_transforms = transforms.Compose([
-        transforms.Resize(size=(256, 256)),
-        transforms.ToTensor()  # Преобразуем изображения в тензоры PyTorch
+        transforms.CenterCrop(size=(224, 224)),
+        transforms.ToTensor(),
     ])
+
     testFolder = "./data/CNN_synth_testset/"
 
-    model_path = "./saveModel/AIDetectionModels/AIDetectionCNN/AIDetectionCNN_epoch_10.pth"
-    model = torch.load(model_path)
+    
+    for modelPath, classModel in model_dict.items():
+        model = classModel().to(args.device)
+        model.load_state_dict(torch.load(modelPath))
+        model.to(args.device)
+        
+        print(type(model))
 
-    print(type(model))
+        for datatype in [item for item in os.listdir(testFolder) if os.path.isdir(os.path.join(testFolder, item))]:
+            folder = os.path.isdir(os.path.join(testFolder, datatype))
+            if not folder:
+                continue
+            folder = os.path.join(testFolder, datatype)
+            if check_directory_structure(folder):
+                dataset = ImageFolder(root=folder, transform=data_transforms)
+                dataloader = DataLoader(dataset, batch_size=args.batch_size, shuffle=True, num_workers=2)
+            else:
+                dataloader = load_data(folder)
 
-    for datatype in [item for item in os.listdir(testFolder) if os.path.isdir(os.path.join(testFolder, item))]:
-        folder = os.path.isdir(os.path.join(testFolder, datatype))
-        if not folder:
-            continue
-        folder = os.path.join(testFolder, datatype)
-        if check_directory_structure(folder):
-            dataset = ImageFolder(root=folder, transform=data_transforms)
-            dataloader = DataLoader(dataset, batch_size=args.batch_size, shuffle=True, num_workers=2)
-        else:
-            dataloader = load_data(folder)
+            file = f"./{type(model).__name__}testmetrix.txt"
+            model.eval()
+            train_predictions = []
+            train_labels = []
+            predictions_probs = []
+            with torch.no_grad():
+                for inputs, labels in tqdm(dataloader):
+                    inputs, labels = inputs.to(args.device), labels.to(args.device)
+                    outputs = model(inputs)
+                    outputs = torch.sigmoid(outputs)  # Преобразуем выходы в бинарные предсказания
+                    _, preds = torch.max(outputs, 1)
+                    predictions_probs.extend(outputs.detach().cpu().numpy()[:, 1])
+                    train_labels.extend(labels.cpu().numpy())
+                    train_predictions.extend(preds.detach().cpu().numpy())
 
-        file = f"./saveModel/AIDetectionModels/{type(model).__name__}/testmetrix.txt"
-        model.eval()
-        train_predictions = []
-        train_labels = []
-        predictions_probs = []
-        with torch.no_grad():
-            for inputs, labels in tqdm(dataloader):
-                inputs, labels = inputs.to(args.device), labels.to(args.device)
-                outputs = model(inputs)
-                outputs = torch.sigmoid(outputs)  # Преобразуем выходы в бинарные предсказания
-                _, preds = torch.max(outputs, 1)
-                predictions_probs.extend(outputs.detach().cpu().numpy()[:, 1])
-                train_labels.extend(labels.cpu().numpy())
-                train_predictions.extend(preds.detach().cpu().numpy())
+            filePrint = PrintIntoFile.set_global_output_file(file)
 
-        filePrint = PrintIntoFile.set_global_output_file(file)
+            print(f"Test data acc {datatype} ")
+            cm = culc_confusion_matrix(train_labels, train_predictions)
+            em.print_metrics(train_labels, train_predictions)
+            em.print_metrics_and_calculate_mean_accuracy(train_labels, train_predictions, predictions_probs)
 
-        print(f"Test data acc {datatype} ")
-        cm = culc_confusion_matrix(train_labels, train_predictions)
-        em.print_metrics(train_labels, train_predictions)
-        em.print_metrics_and_calculate_mean_accuracy(train_labels, train_predictions, predictions_probs)
-
-        PrintIntoFile.restore_output(filePrint)
+            PrintIntoFile.restore_output(filePrint)
