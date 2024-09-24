@@ -74,12 +74,12 @@ def plot_metrics(all_data):
 
 def main():
     # Пути к файлам
-    file_paths = ["./saveModel/AIDetectionModels/AIDetectionCNN/AIDetectionCNN.txt", './saveModel/AIDetectionModels/AIDetectionCNN7BatchNorm/AIDetectionCNN7BatchNorm.txt', './saveModel/AIDetectionModels/AIDetectionCNNBaseNormBatch/AIDetectionCNNBaseNormBatch.txt']
+    file_paths = []#["./saveModel/AIDetectionModels/AIDetectionCNN/AIDetectionCNN.txt", './saveModel/AIDetectionModels/AIDetectionCNN7BatchNorm/AIDetectionCNN7BatchNorm.txt', './saveModel/AIDetectionModels/AIDetectionCNNBaseNormBatch/AIDetectionCNNBaseNormBatch.txt']
     #file_paths = ["./resultTrain/ClassifierNE.txt", "./resultTrain/ClassifierNEmoreL.txt", "./resultTrain/ClassifierNEPReLU.txt"]
     #file_paths = ["./resultTrain/ClassifierViT.txt", "./resultTrain/Classifierclip_vit_base_patch32.txt", "./resultTrain/ClassifierResNet.txt"]
     #file_paths = ["./resultTrain/ClassifierNE.txt", "./saveModel/AIDetectionModels/AIDetectionCNN/AIDetectionCNN.txt", "./resultTrain/Classifierclip_vit_base_patch32.txt"]
-    csv_path = ""#"./data/CNN from Paper.csv"
-    csv_path2 = ""#"./data/CLIP paper.csv"
+    csv_path = "./data/CNN from Paper.csv"
+    csv_path2 = ''#"./data/CLIP paper.csv"
     
     # Парсинг файлов и объединение данных
     all_data = {}

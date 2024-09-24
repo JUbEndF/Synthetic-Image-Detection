@@ -154,7 +154,7 @@ class ClassifierResNet50(nn.Module):
 
 class ClassifierResNet(nn.Module):
     def __init__(self, feature_dim=2048, output_dim=2):
-        super(ClassifierResNet101, self).__init__()
+        super(ClassifierResNet, self).__init__()
         self.input_dim = feature_dim
         self.output_dim = output_dim
         # Загрузка предобученной модели ResNet-101
